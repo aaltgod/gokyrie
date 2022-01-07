@@ -3,7 +3,7 @@ package main
 import (
 	"os"
 
-	"github.com/alyaskastorm/gokyrie/internal/app"
+	"github.com/aaltgod/gokyrie/internal/app"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
