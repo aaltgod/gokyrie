@@ -1,4 +1,4 @@
-module github.com/alyaskastorm/gokyrie
+module github.com/aaltgod/gokyrie
 
 go 1.17
 
