@@ -12,6 +12,8 @@ require (
 require (
 	github.com/atotto/clipboard v0.1.2 // indirect
 	github.com/containerd/console v1.0.2 // indirect
+	github.com/gosuri/uilive v0.0.4 // indirect
+	github.com/guptarohit/asciigraph v0.5.2 // indirect
 	github.com/lucasb-eyer/go-colorful v1.2.0 // indirect
 	github.com/mattn/go-isatty v0.0.13 // indirect
 	github.com/mattn/go-runewidth v0.0.13 // indirect

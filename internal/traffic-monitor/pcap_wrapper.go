@@ -21,16 +21,32 @@ var (
 	handle      *pcap.Handle
 )
 
-type PcapWrapper struct{}
+type Sender struct {
+	IP         string
+	PageAmount int
+}
+
+type PcapWrapper struct {
+	SenderByIP map[string]*Sender
+}
+
+func NewPcapWrapper() *PcapWrapper {
+	return &PcapWrapper{
+		SenderByIP: make(map[string]*Sender),
+	}
+}
 
 func (p *PcapWrapper) CapturePackets(interfaceName string) error {
 
 	if handle, err := pcap.OpenLive(interfaceName, snapshotLen, promiscuous, pcap.BlockForever); err != nil {
 		log.Fatal(err)
+	} else if err := handle.SetBPFFilter("tcp and port 8081"); err != nil {
+		log.Fatal(err)
 	} else {
 		packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 		for packet := range packetSource.Packets() {
-			printPacketInfo(packet)
+			p.HandlePacket(packet)
+			printSenders(p.SenderByIP)
 		}
 	}
 	defer handle.Close()
@@ -38,7 +54,7 @@ func (p *PcapWrapper) CapturePackets(interfaceName string) error {
 	return nil
 }
 
-func printPacketInfo(packet gopacket.Packet) {
+func (p *PcapWrapper) HandlePacket(packet gopacket.Packet) {
 	for _, layer := range packet.Layers() {
 		var output string
 
@@ -61,6 +77,16 @@ func printPacketInfo(packet gopacket.Packet) {
 				ipv4Packet.DstIP,
 				ipv4Packet.Protocol,
 			)
+
+			sender, ok := p.SenderByIP[ipv4Packet.SrcIP.String()]
+			if !ok {
+				p.SenderByIP[ipv4Packet.SrcIP.String()] = &Sender{
+					IP:         ipv4Packet.SrcIP.String(),
+					PageAmount: 1,
+				}
+			} else {
+				sender.PageAmount++
+			}
 
 		case layers.LayerTypeTCP:
 			tcpPacket, _ := packet.Layer(layers.LayerTypeTCP).(*layers.TCP)
@@ -89,5 +115,12 @@ func printPacketInfo(packet gopacket.Packet) {
 		}
 
 		fmt.Println(output)
+	}
+}
+
+func printSenders(senders map[string]*Sender) {
+
+	for ip, sender := range senders {
+		fmt.Println(ip, sender.IP, sender.PageAmount)
 	}
 }

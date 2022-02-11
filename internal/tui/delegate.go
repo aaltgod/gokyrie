@@ -1,6 +1,8 @@
-package app
+package cliclient
 
 import (
+	"github.com/aaltgod/gokyrie/internal/tui/graph"
+	"github.com/aaltgod/gokyrie/internal/tui/team"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -15,20 +17,25 @@ func NewItemDelegate(keys *DelegateKeyMap) list.DefaultDelegate {
 
 	var d = list.NewDefaultDelegate()
 
+	d.SetSpacing(2)
+
 	d.UpdateFunc = func(msg tea.Msg, m *list.Model) tea.Cmd {
 		var teamName string
 
-		if i, ok := m.SelectedItem().(Team); ok {
+		if i, ok := m.SelectedItem().(team.Team); ok {
 			teamName = i.TeamName
 		} else {
 			return nil
 		}
+		_ = teamName
 
 		switch msg := msg.(type) {
 		case tea.KeyMsg:
 			switch {
 			case key.Matches(msg, keys.Enter):
-				return m.NewStatusMessage(statusMessageStyle("You chose " + teamName))
+				return graph.Graph()
+			case key.Matches(msg, keys.BackSpace):
+				return m.NewStatusMessage("BACK")
 			}
 		}
 
