@@ -28,11 +28,6 @@ var (
 			PaddingBottom(5).
 			PaddingLeft(1)
 
-	// 	viewportStyle = lipgloss.NewStyle().
-	// 			Align(lipgloss.Left).
-	// 			Foreground(lipgloss.Color("#FAFAFA")).
-	// 			Padding(1, 2)
-
 	graphStyle = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#FFFDF5")).
 			Background(lipgloss.Color("#AD40FF"))

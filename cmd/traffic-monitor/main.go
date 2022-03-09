@@ -7,7 +7,6 @@ import (
 )
 
 func main() {
-
 	pcapWrapper := trafficmonitor.NewPcapWrapper()
 	if err := pcapWrapper.CapturePackets("eth0"); err != nil {
 		log.Fatal(err)

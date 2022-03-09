@@ -11,7 +11,6 @@ func (m Model) Update() (Model, tea.Cmd) {
 }
 
 func (m Model) View() string {
-
 	output := m.Team.TeamName + "\n"
 	output += m.Graph.View()
 	return output

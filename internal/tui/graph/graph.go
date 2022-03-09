@@ -43,9 +43,7 @@ func (m *Model) StopGraph() {
 }
 
 func (m Model) View() string {
-
 	graph := Plot()
-
 	return graph
 }
 

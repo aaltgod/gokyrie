@@ -11,7 +11,7 @@ import (
 )
 
 const (
-	// like tcp len
+	// tcp length
 	defaultSnapLen = 262144
 )
 
@@ -119,7 +119,6 @@ func (p *PcapWrapper) HandlePacket(packet gopacket.Packet) {
 }
 
 func printSenders(senders map[string]*Sender) {
-
 	for ip, sender := range senders {
 		fmt.Println(ip, sender.IP, sender.PageAmount)
 	}
