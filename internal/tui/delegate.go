@@ -1,8 +1,8 @@
 package cliclient
 
 import (
-	"github.com/aaltgod/gokyrie/internal/tui/graph"
-	"github.com/aaltgod/gokyrie/internal/tui/team"
+	"github.com/aaltgod/gokyrie/internal/tui/bubbles/graph"
+	"github.com/aaltgod/gokyrie/internal/tui/bubbles/team"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	tea "github.com/charmbracelet/bubbletea"
@@ -23,7 +23,7 @@ func NewItemDelegate(keys *DelegateKeyMap) list.DefaultDelegate {
 		var teamName string
 
 		if i, ok := m.SelectedItem().(team.Team); ok {
-			teamName = i.TeamName
+			teamName = i.Name
 		} else {
 			return nil
 		}

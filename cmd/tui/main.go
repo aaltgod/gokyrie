@@ -4,8 +4,8 @@ import (
 	"log"
 	"os"
 
+	"github.com/aaltgod/gokyrie/internal/config"
 	app "github.com/aaltgod/gokyrie/internal/tui"
-	"github.com/aaltgod/gokyrie/internal/tui/team"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -17,53 +17,56 @@ func main() {
 	}
 	defer logger.Close()
 
-	teams := []team.Team{
+	teams := []config.Team{
 		{
-			TeamName: "team1",
-			TeamIP:   "154.12.32.11",
+			Name: "team1",
+			IP:   "154.12.32.11",
 		},
 		{
-			TeamName: "team2",
-			TeamIP:   "154.12.33.11",
+			Name: "team2",
+			IP:   "154.12.33.11",
 		},
 		{
-			TeamName: "team3",
-			TeamIP:   "154.12.34.11",
+			Name: "team3",
+			IP:   "154.12.34.11",
 		},
 		{
-			TeamName: "team4",
-			TeamIP:   "154.12.34.11",
+			Name: "team4",
+			IP:   "154.12.34.11",
 		},
 		{
-			TeamName: "team5",
-			TeamIP:   "154.12.34.11",
+			Name: "team5",
+			IP:   "154.12.34.11",
 		},
 		{
-			TeamName: "team6",
-			TeamIP:   "154.12.34.11",
+			Name: "team6",
+			IP:   "154.12.34.11",
 		},
 		{
-			TeamName: "team7",
-			TeamIP:   "154.12.34.11",
+			Name: "team7",
+			IP:   "154.12.34.11",
 		},
 		{
-			TeamName: "team8",
-			TeamIP:   "154.12.34.11",
+			Name: "team8",
+			IP:   "154.12.34.11",
 		},
 		{
-			TeamName: "team9",
-			TeamIP:   "154.12.34.11",
+			Name: "team9",
+			IP:   "154.12.34.11",
 		},
 		{
-			TeamName: "team10",
-			TeamIP:   "154.12.34.11",
+			Name: "team10",
+			IP:   "154.12.34.11",
 		},
 	}
 
-	m := app.NewModel(logger, teams...)
+	// m := app.NewModel(logger, teams...)
+
+	cfg := config.NewConfig(teams...)
+	m := app.NewBubble(cfg)
 
 	if err := tea.NewProgram(m, tea.WithAltScreen()).Start(); err != nil {
-		m.Logger.WriteString("App doesn't start: " + err.Error())
+		// m.Logger.WriteString("App doesn't start: " + err.Error())
 		os.Exit(1)
 	}
 

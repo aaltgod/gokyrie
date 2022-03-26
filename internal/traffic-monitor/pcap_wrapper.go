@@ -2,7 +2,6 @@ package trafficmonitor
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/google/gopacket"
@@ -39,9 +38,9 @@ func NewPcapWrapper() *PcapWrapper {
 func (p *PcapWrapper) CapturePackets(interfaceName string) error {
 
 	if handle, err := pcap.OpenLive(interfaceName, snapshotLen, promiscuous, pcap.BlockForever); err != nil {
-		log.Fatal(err)
+		return err
 	} else if err := handle.SetBPFFilter("tcp and port 8081"); err != nil {
-		log.Fatal(err)
+		return err
 	} else {
 		packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 		for packet := range packetSource.Packets() {

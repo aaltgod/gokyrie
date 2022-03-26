@@ -3,7 +3,7 @@ package cliclient
 import (
 	"os"
 
-	"github.com/aaltgod/gokyrie/internal/tui/graph"
+	"github.com/aaltgod/gokyrie/internal/tui/bubbles/graph"
 	"github.com/charmbracelet/bubbles/key"
 	"github.com/charmbracelet/bubbles/list"
 	"github.com/charmbracelet/bubbles/viewport"

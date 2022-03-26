@@ -1,9 +1,9 @@
 package team
 
-import "github.com/aaltgod/gokyrie/internal/tui/graph"
+import "github.com/aaltgod/gokyrie/internal/tui/bubbles/graph"
 
 type Team struct {
-	TeamName, TeamIP string
+	Name, IP string
 }
 
 type Model struct {
