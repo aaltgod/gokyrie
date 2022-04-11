@@ -8,6 +8,8 @@ type Styles struct {
 
 	App    lipgloss.Style
 	Header lipgloss.Style
+	Footer lipgloss.Style
+	Branch lipgloss.Style
 
 	Menu             lipgloss.Style
 	MenuItem         lipgloss.Style
@@ -30,9 +32,17 @@ func DefaultStyles() *Styles {
 		Margin(1, 2)
 
 	s.Header = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#413b47")).
+		Foreground(lipgloss.Color("#F98C17")).
 		Align(lipgloss.Right).
 		Bold(true)
+
+	s.Footer = lipgloss.NewStyle().
+		MarginTop(1)
+
+	s.Branch = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#3d1")).
+		Background(lipgloss.Color("#14222b")).
+		Padding(0, 1)
 
 	s.Menu = lipgloss.NewStyle().
 		BorderStyle(lipgloss.RoundedBorder()).
@@ -42,14 +52,14 @@ func DefaultStyles() *Styles {
 		Width(24)
 
 	s.MenuCursor = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#008712")).
+		Foreground(lipgloss.Color("#F98C17")).
 		SetString(">")
 
 	s.MenuItem = lipgloss.NewStyle().
-		PaddingLeft(2)
+		PaddingLeft(3)
 
 	s.SelectedMenuItem = lipgloss.NewStyle().
-		Foreground(lipgloss.Color("#908208")).
+		Foreground(lipgloss.Color("#FBB162")).
 		PaddingLeft(2)
 
 	s.TeamBodyBorder = lipgloss.Border{
@@ -65,7 +75,7 @@ func DefaultStyles() *Styles {
 
 	s.TeamBody = lipgloss.NewStyle().
 		BorderStyle(s.TeamBodyBorder).
-		BorderBackground(s.InactiveBorderColor).
+		BorderForeground(s.InactiveBorderColor).
 		PaddingRight(1)
 
 	return s
