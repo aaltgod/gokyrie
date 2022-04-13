@@ -41,7 +41,8 @@ var (
 type appState int
 
 const (
-	startState appState = iota + 1
+	startState appState = iota
+	loadState
 	errorState
 	quittingState
 	quitState
@@ -118,6 +119,8 @@ func (b *Bubble) Init() tea.Cmd {
 
 	b.boxes[1] = b.teamEntry[0].bubble
 
+	b.state = loadState
+
 	return nil
 }
 
@@ -136,6 +139,16 @@ func (b *Bubble) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		b.lastResize = msg
 		b.width = msg.Width
 		b.height = msg.Height
+
+		if b.state == loadState {
+			for i, bx := range b.boxes {
+				m, cmd := bx.Update(msg)
+				b.boxes[i] = m
+				if cmd != nil {
+					cmds = append(cmds, cmd)
+				}
+			}
+		}
 	case selection.SelectedMsg:
 		b.activeBox = 1
 		team := b.teamEntry[msg.Index].bubble
@@ -147,7 +160,7 @@ func (b *Bubble) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		})
 	}
 
-	if b.state == startState {
+	if b.state == loadState {
 		updatedBubble, cmd := b.boxes[b.activeBox].Update(msg)
 		b.boxes[b.activeBox] = updatedBubble
 		if cmd != nil {
@@ -164,7 +177,7 @@ func (b Bubble) View() string {
 	s.WriteRune('\n')
 
 	switch b.state {
-	case startState:
+	case loadState:
 		selection := b.boxView(0)
 		teamBody := b.boxView(1)
 		s.WriteString(lipgloss.JoinHorizontal(lipgloss.Top, selection, teamBody))
@@ -191,6 +204,7 @@ func (b Bubble) footerView() string {
 	return b.style.Footer.Render(footer)
 }
 func (b *Bubble) boxView(boxIdx int) string {
+
 	isActive := boxIdx == b.activeBox
 
 	switch box := b.boxes[boxIdx].(type) {
@@ -202,7 +216,6 @@ func (b *Bubble) boxView(boxIdx int) string {
 		return s.Render(box.View())
 	case *team.Bubble:
 		box.Active = isActive
-
 		return box.View()
 	default:
 		//TODO: need to add an handling of an unknown bubble

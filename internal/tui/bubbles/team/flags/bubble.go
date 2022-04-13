@@ -1,4 +1,4 @@
-package stat
+package flags
 
 import (
 	"github.com/aaltgod/gokyrie/internal/tui/style"

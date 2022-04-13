@@ -1,6 +1,7 @@
 package team
 
 import (
+	"github.com/aaltgod/gokyrie/internal/tui/bubbles/team/flags"
 	stat "github.com/aaltgod/gokyrie/internal/tui/bubbles/team/stats"
 	"github.com/aaltgod/gokyrie/internal/tui/style"
 	tea "github.com/charmbracelet/bubbletea"
@@ -10,7 +11,8 @@ import (
 type state int
 
 const (
-	statState state = iota + 1
+	statState state = iota
+	flagState
 	configState
 )
 
@@ -42,7 +44,13 @@ func NewBubble(serviceName, servicePort string, styles *style.Styles, width, wm,
 		heightMargin: hm,
 		boxes:        make([]tea.Model, 2),
 	}
+
 	b.boxes[statState] = stat.NewBubble(
+		serviceName, servicePort,
+		b.style, width, wm+b.style.TeamBody.GetHorizontalBorderSize(),
+		height, hm+lipgloss.Height(b.headerView())+styles.TeamBody.GetVerticalBorderSize(),
+	)
+	b.boxes[flagState] = flags.NewBubble(
 		serviceName, servicePort,
 		b.style, width, wm+b.style.TeamBody.GetHorizontalBorderSize(),
 		height, hm+lipgloss.Height(b.headerView())+styles.TeamBody.GetVerticalBorderSize(),
