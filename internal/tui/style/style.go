@@ -25,8 +25,8 @@ func DefaultStyles() *Styles {
 
 	s := new(Styles)
 
-	s.ActiveBorderColor = lipgloss.Color("#3d1967")
-	s.InactiveBorderColor = lipgloss.Color("#413b47")
+	s.ActiveBorderColor = lipgloss.Color("#F98C17")
+	s.InactiveBorderColor = lipgloss.Color("#FBB162")
 
 	s.App = lipgloss.NewStyle().
 		Margin(1, 2)

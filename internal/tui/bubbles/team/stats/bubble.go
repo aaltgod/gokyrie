@@ -1,7 +1,9 @@
 package stat
 
 import (
+	"github.com/aaltgod/gokyrie/internal/tui/bubbles/team/stats/graph"
 	"github.com/aaltgod/gokyrie/internal/tui/style"
+
 	"github.com/charmbracelet/bubbles/viewport"
 	tea "github.com/charmbracelet/bubbletea"
 )
@@ -50,7 +52,7 @@ func (b *Bubble) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (b Bubble) View() string {
-	b.viewport.SetContent(b.serviceName + " " + b.servicePort)
+	b.viewport.SetContent(graph.Plot())
 	b.viewport.GotoTop()
 	return b.viewport.View()
 }

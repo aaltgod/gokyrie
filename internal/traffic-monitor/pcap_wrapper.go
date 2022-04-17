@@ -3,6 +3,7 @@ package trafficmonitor
 import (
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"sync"
 
@@ -10,6 +11,7 @@ import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
+	"github.com/google/gopacket/pcapgo"
 )
 
 const (
@@ -76,6 +78,16 @@ func (p *PcapWrapper) statistic() {
 func (p *PcapWrapper) capturePackets(service config.Service) {
 	defer p.wg.Done()
 
+	file, err := os.Create(service.Name + ".pcap")
+	if err != nil {
+		p.ErrorCh <- err
+		return
+	}
+
+	w := pcapgo.NewWriter(file)
+	w.WriteFileHeader(defaultSnapLen, layers.LinkTypeEthernet)
+	defer file.Close()
+
 	if handle, err := pcap.OpenLive(
 		p.config.InterfaceName, snapshotLen,
 		promiscuous, pcap.BlockForever,
@@ -90,13 +102,13 @@ func (p *PcapWrapper) capturePackets(service config.Service) {
 	} else {
 		packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
 		for packet := range packetSource.Packets() {
-			p.handlePacket(packet)
+			p.handlePacket(w, packet)
 		}
 	}
 	defer handle.Close()
 }
 
-func (p *PcapWrapper) handlePacket(packet gopacket.Packet) {
+func (p *PcapWrapper) handlePacket(w *pcapgo.Writer, packet gopacket.Packet) {
 
 	for _, layer := range packet.Layers() {
 		var output string
@@ -106,7 +118,7 @@ func (p *PcapWrapper) handlePacket(packet gopacket.Packet) {
 		case layers.LayerTypeEthernet:
 			ethernetPacket, _ := packet.Layer(layers.LayerTypeEthernet).(*layers.Ethernet)
 			output = fmt.Sprintf(
-				"Ethernet layer detected\nSource MAC: %s Destination MAC: %s\nEthernet type: %s\n\n",
+				"Ethernet layer detected\nSource MAC: %s Destination MAC: %s\nEthernet type: %s\n",
 				ethernetPacket.SrcMAC,
 				ethernetPacket.DstMAC,
 				ethernetPacket.EthernetType,
@@ -122,7 +134,7 @@ func (p *PcapWrapper) handlePacket(packet gopacket.Packet) {
 			)
 
 			ip := ipv4Packet.SrcIP.String()
-			if !p.existTeamIP(ip) {
+			if p.existTeamIP(ip) {
 				continue
 			}
 
@@ -136,11 +148,13 @@ func (p *PcapWrapper) handlePacket(packet gopacket.Packet) {
 		case layers.LayerTypeTCP:
 			tcpPacket, _ := packet.Layer(layers.LayerTypeTCP).(*layers.TCP)
 			output = fmt.Sprintf(
-				"TCP layer detected\nFrom %d to %d\t Sequence number: %d\n\n",
+				"TCP layer detected\nFrom %d to %d\t Sequence number: %d\n",
 				tcpPacket.SrcPort,
 				tcpPacket.DstPort,
 				tcpPacket.Seq,
 			)
+
+			w.WritePacket(packet.Metadata().CaptureInfo, packet.Data())
 
 		default:
 			appLayer := packet.ApplicationLayer()
@@ -152,7 +166,7 @@ func (p *PcapWrapper) handlePacket(packet gopacket.Packet) {
 				}
 
 				fmt.Printf(
-					"Application layer/Payload detected\n%s\n%t\n\n",
+					"Application layer/Payload detected\n%s\n%t\n",
 					appLayer.Payload(),
 					isHTTPExists,
 				)
@@ -160,6 +174,7 @@ func (p *PcapWrapper) handlePacket(packet gopacket.Packet) {
 		}
 
 		fmt.Println(output)
+		fmt.Println(len(p.SendersByIPCh))
 	}
 }
 

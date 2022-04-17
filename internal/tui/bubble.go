@@ -89,7 +89,7 @@ func NewBubble(cfg *config.Config) *Bubble {
 func (b *Bubble) Init() tea.Cmd {
 
 	tm := trafficmonitor.NewPcapWrapper(b.config)
-	//tm.StartListeners()
+	// tm.StartListeners()
 	b.tm = tm
 
 	menu := selection.NewBubble(b.config.Teams, b.style)
