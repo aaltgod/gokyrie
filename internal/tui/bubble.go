@@ -1,6 +1,7 @@
 package cliclient
 
 import (
+	"context"
 	"log"
 	"os"
 	"strings"
@@ -10,6 +11,7 @@ import (
 	"github.com/aaltgod/gokyrie/internal/tui/bubbles/selection"
 	"github.com/aaltgod/gokyrie/internal/tui/bubbles/team"
 	"github.com/aaltgod/gokyrie/internal/tui/style"
+
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"golang.org/x/crypto/ssh/terminal"
@@ -55,7 +57,8 @@ type TeamEntry struct {
 }
 
 type Bubble struct {
-	tm         *trafficmonitor.PcapWrapper
+	ctx        context.Context
+	dataCh     chan trafficmonitor.Data
 	width      int
 	height     int
 	lastResize tea.WindowSizeMsg
@@ -67,8 +70,10 @@ type Bubble struct {
 	style      *style.Styles
 }
 
-func NewBubble(cfg *config.Config) *Bubble {
+func NewBubble(ctx context.Context, cfg *config.Config, dataCh chan trafficmonitor.Data) *Bubble {
 	b := &Bubble{
+		ctx:    ctx,
+		dataCh: dataCh,
 		boxes:  make([]tea.Model, 2),
 		config: cfg,
 		style:  style.DefaultStyles(),
@@ -88,10 +93,6 @@ func NewBubble(cfg *config.Config) *Bubble {
 
 func (b *Bubble) Init() tea.Cmd {
 
-	tm := trafficmonitor.NewPcapWrapper(b.config)
-	// tm.StartListeners()
-	b.tm = tm
-
 	menu := selection.NewBubble(b.config.Teams, b.style)
 	b.boxes[0] = menu
 	b.activeBox = 0
@@ -110,6 +111,7 @@ func (b *Bubble) Init() tea.Cmd {
 		b.teamEntry = append(b.teamEntry, TeamEntry{
 			t.Name, t.IP,
 			team.NewBubble(
+				b.dataCh,
 				t.Name, t.IP, b.style,
 				b.width, boxLeftWidth,
 				b.height, heightMargin,

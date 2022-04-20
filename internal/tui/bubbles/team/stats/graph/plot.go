@@ -11,7 +11,7 @@ var (
 	vals                       = 100
 	fps                float64 = 24
 	realTimeDataBuffer         = 63
-	height                     = 2
+	height                     = 4
 )
 
 func Plot() string {

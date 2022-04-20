@@ -1,6 +1,7 @@
 package team
 
 import (
+	trafficmonitor "github.com/aaltgod/gokyrie/internal/traffic-monitor"
 	"github.com/aaltgod/gokyrie/internal/tui/bubbles/team/flags"
 	stat "github.com/aaltgod/gokyrie/internal/tui/bubbles/team/stats"
 	"github.com/aaltgod/gokyrie/internal/tui/style"
@@ -17,6 +18,7 @@ const (
 )
 
 type Bubble struct {
+	dataCh       chan trafficmonitor.Data
 	state        state
 	serviceName  string
 	servicePort  string
@@ -32,8 +34,9 @@ type Bubble struct {
 	Active bool
 }
 
-func NewBubble(serviceName, servicePort string, styles *style.Styles, width, wm, height, hm int) *Bubble {
+func NewBubble(dataCh chan trafficmonitor.Data, serviceName, servicePort string, styles *style.Styles, width, wm, height, hm int) *Bubble {
 	b := &Bubble{
+		dataCh:       dataCh,
 		serviceName:  serviceName,
 		servicePort:  servicePort,
 		state:        statState,
@@ -46,7 +49,7 @@ func NewBubble(serviceName, servicePort string, styles *style.Styles, width, wm,
 	}
 
 	b.boxes[statState] = stat.NewBubble(
-		serviceName, servicePort,
+		dataCh, serviceName, servicePort,
 		b.style, width, wm+b.style.TeamBody.GetHorizontalBorderSize(),
 		height, hm+lipgloss.Height(b.headerView())+styles.TeamBody.GetVerticalBorderSize(),
 	)

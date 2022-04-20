@@ -1,6 +1,7 @@
 package trafficmonitor
 
 import (
+	"context"
 	"fmt"
 	"log"
 	"os"
@@ -22,8 +23,12 @@ const (
 var (
 	snapshotLen int32 = 1024
 	promiscuous bool  = true
-	handle      *pcap.Handle
 )
+
+type Data struct {
+	IP   string
+	Text string
+}
 
 type Sender struct {
 	IP         string
@@ -33,49 +38,69 @@ type Sender struct {
 type PcapWrapper struct {
 	config        *config.Config
 	wg            *sync.WaitGroup
-	mu            sync.Mutex
+	mu            *sync.Mutex
+	dataCh        chan Data
 	SendersByIPCh chan map[string]*Sender
 	ErrorCh       chan error
 }
 
-func NewPcapWrapper(cfg *config.Config) *PcapWrapper {
+func NewPcapWrapper(cfg *config.Config, dataCh chan Data) *PcapWrapper {
 	return &PcapWrapper{
 		config:        cfg,
 		wg:            &sync.WaitGroup{},
-		mu:            sync.Mutex{},
+		mu:            &sync.Mutex{},
+		dataCh:        dataCh,
 		SendersByIPCh: make(chan map[string]*Sender, len(cfg.Teams)),
 		ErrorCh:       make(chan error),
 	}
 }
 
-func (p *PcapWrapper) StartListeners() {
+func (p *PcapWrapper) StartListeners(ctx context.Context) error {
 
-	go p.statistic()
+	go p.statistic(ctx)
 
 	p.wg.Add(len(p.config.Services))
 	for _, service := range p.config.Services {
-		go p.listener(service)
+		go p.listener(ctx, service)
 	}
 	p.wg.Wait()
-}
 
-func (p *PcapWrapper) listener(service config.Service) {
-	p.capturePackets(service)
-}
-
-func (p *PcapWrapper) statistic() {
 	for {
 		select {
 		case err := <-p.ErrorCh:
-			// TODO: return error to tui maybe
-			log.Fatal("Listener error: ", err)
-		case sender := <-p.SendersByIPCh:
-			log.Println(sender)
+			return err
+		default:
+			return nil
 		}
 	}
 }
 
-func (p *PcapWrapper) capturePackets(service config.Service) {
+func (p *PcapWrapper) listener(ctx context.Context, service config.Service) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			p.capturePackets(ctx, service)
+		}
+	}
+}
+
+func (p *PcapWrapper) statistic(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case err := <-p.ErrorCh:
+			// TODO: return error to tui maybe
+			log.Fatal("Listener error: ", err)
+		case <-p.SendersByIPCh:
+			// log.Println(sender)
+		}
+	}
+}
+
+func (p *PcapWrapper) capturePackets(ctx context.Context, service config.Service) {
 	defer p.wg.Done()
 
 	file, err := os.Create(service.Name + ".pcap")
@@ -83,55 +108,58 @@ func (p *PcapWrapper) capturePackets(service config.Service) {
 		p.ErrorCh <- err
 		return
 	}
+	defer file.Close()
 
 	w := pcapgo.NewWriter(file)
 	w.WriteFileHeader(defaultSnapLen, layers.LinkTypeEthernet)
-	defer file.Close()
 
-	if handle, err := pcap.OpenLive(
+	handle, err := pcap.OpenLive(
 		p.config.InterfaceName, snapshotLen,
 		promiscuous, pcap.BlockForever,
-	); err != nil {
+	)
+	if err != nil {
 		p.ErrorCh <- err
 		return
-	} else if err := handle.SetBPFFilter(
+	}
+	// FIXME: Close() doesn't return
+	//defer handle.Close()
+
+	if err = handle.SetBPFFilter(
 		fmt.Sprintf("tcp and port %d", service.Port),
 	); err != nil {
 		p.ErrorCh <- err
 		return
-	} else {
-		packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
-		for packet := range packetSource.Packets() {
-			p.handlePacket(w, packet)
+	}
+
+	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
+	for {
+		packetAmount := len(packetSource.Packets())
+		select {
+		case <-ctx.Done():
+			return
+		default:
+			if packetAmount > 0 {
+				for packet := range packetSource.Packets() {
+					select {
+					case <-ctx.Done():
+						return
+					default:
+						p.handlePacket(w, packet)
+					}
+				}
+			}
 		}
 	}
-	defer handle.Close()
 }
 
 func (p *PcapWrapper) handlePacket(w *pcapgo.Writer, packet gopacket.Packet) {
 
 	for _, layer := range packet.Layers() {
-		var output string
-
 		layerType := layer.LayerType()
 		switch layerType {
 		case layers.LayerTypeEthernet:
-			ethernetPacket, _ := packet.Layer(layers.LayerTypeEthernet).(*layers.Ethernet)
-			output = fmt.Sprintf(
-				"Ethernet layer detected\nSource MAC: %s Destination MAC: %s\nEthernet type: %s\n",
-				ethernetPacket.SrcMAC,
-				ethernetPacket.DstMAC,
-				ethernetPacket.EthernetType,
-			)
-
 		case layers.LayerTypeIPv4:
 			ipv4Packet, _ := packet.Layer(layers.LayerTypeIPv4).(*layers.IPv4)
-			output = fmt.Sprintf(
-				"IPv4 layer detected\nFrom %s to %s\tProtocol: %s\n",
-				ipv4Packet.SrcIP,
-				ipv4Packet.DstIP,
-				ipv4Packet.Protocol,
-			)
 
 			ip := ipv4Packet.SrcIP.String()
 			if p.existTeamIP(ip) {
@@ -144,18 +172,10 @@ func (p *PcapWrapper) handlePacket(w *pcapgo.Writer, packet gopacket.Packet) {
 				PageAmount: 1,
 			}
 			p.SendersByIPCh <- sender
-
 		case layers.LayerTypeTCP:
-			tcpPacket, _ := packet.Layer(layers.LayerTypeTCP).(*layers.TCP)
-			output = fmt.Sprintf(
-				"TCP layer detected\nFrom %d to %d\t Sequence number: %d\n",
-				tcpPacket.SrcPort,
-				tcpPacket.DstPort,
-				tcpPacket.Seq,
-			)
-
+			p.mu.Lock()
 			w.WritePacket(packet.Metadata().CaptureInfo, packet.Data())
-
+			p.mu.Unlock()
 		default:
 			appLayer := packet.ApplicationLayer()
 			if appLayer != nil {
@@ -165,16 +185,17 @@ func (p *PcapWrapper) handlePacket(w *pcapgo.Writer, packet gopacket.Packet) {
 					isHTTPExists = true
 				}
 
-				fmt.Printf(
+				var data Data
+				data.IP = appLayer.LayerType().String()
+				output := fmt.Sprintf(
 					"Application layer/Payload detected\n%s\n%t\n",
 					appLayer.Payload(),
 					isHTTPExists,
 				)
+				data.Text = output
+				p.dataCh <- data
 			}
 		}
-
-		fmt.Println(output)
-		fmt.Println(len(p.SendersByIPCh))
 	}
 }
 
