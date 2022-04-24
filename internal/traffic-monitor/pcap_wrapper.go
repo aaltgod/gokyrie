@@ -7,6 +7,7 @@ import (
 	"os"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/aaltgod/gokyrie/internal/config"
 	"github.com/google/gopacket"
@@ -148,6 +149,7 @@ func (p *PcapWrapper) capturePackets(ctx context.Context, service config.Service
 					}
 				}
 			}
+			time.Sleep(time.Second)
 		}
 	}
 }

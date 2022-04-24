@@ -4,7 +4,6 @@ import (
 	"strings"
 
 	"github.com/aaltgod/gokyrie/internal/config"
-	"github.com/aaltgod/gokyrie/internal/tui/help"
 	"github.com/aaltgod/gokyrie/internal/tui/style"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -51,11 +50,14 @@ func (b Bubble) View() string {
 			s.WriteString(b.styles.MenuCursor.String())
 			s.WriteString(b.styles.SelectedMenuItem.Render(teamName))
 			s.WriteRune('\n')
-			s.WriteString(b.styles.SelectedMenuItem.Render(teamAddress))
+			s.WriteString(b.styles.SelectedMenuItem.Render(
+				teamAddress +
+					b.styles.ServiceStatus.Copy().Foreground(b.styles.ActiveServiceStatusColor).Render("❌"),
+			))
 		} else {
 			s.WriteString(b.styles.MenuItem.Render(teamName))
 			s.WriteRune('\n')
-			s.WriteString(b.styles.MenuItem.Render(teamAddress))
+			s.WriteString(b.styles.MenuItem.Render(teamAddress) + b.styles.ServiceStatus.Render("●"))
 		}
 		if i < len(b.Items)-1 {
 			s.WriteRune('\n')
@@ -87,11 +89,11 @@ func (b *Bubble) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return b, tea.Batch(cmds...)
 }
 
-func (b *Bubble) Help() []help.HelpEntry {
-	return []help.HelpEntry{
-		{Key: "↑/↓", Value: "navigate"},
-	}
-}
+// func (b *Bubble) Help() []help.HelpEntry {
+// 	return []help.HelpEntry{
+// 		{Key: "↑/↓", Value: "navigate"},
+// 	}
+// }
 
 func (b *Bubble) sendActiveMessage() tea.Msg {
 	if b.SelectedItem >= 0 && b.SelectedItem < len(b.Items) {

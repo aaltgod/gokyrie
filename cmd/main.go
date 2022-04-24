@@ -38,7 +38,11 @@ func main() {
 			eg.Go(func() error {
 				defer cancel()
 				m := app.NewBubble(ctx, cfg, dataCh)
-				return tea.NewProgram(m, tea.WithAltScreen()).Start()
+				p := tea.NewProgram(
+					m, tea.WithAltScreen(),
+					tea.WithMouseAllMotion(),
+				)
+				return p.Start()
 			})
 
 			return eg.Wait()

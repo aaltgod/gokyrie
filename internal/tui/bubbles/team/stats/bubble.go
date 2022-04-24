@@ -81,16 +81,14 @@ type DataMsg struct {
 
 func (b *Bubble) getData() tea.Cmd {
 	return tea.Tick(time.Millisecond*1000, func(t time.Time) tea.Msg {
-		for {
-			select {
-			case d := <-b.dataCh:
-				return DataMsg{
-					IP:   d.IP,
-					Text: d.Text,
-				}
-			default:
-				return nil
+		select {
+		case d := <-b.dataCh:
+			return DataMsg{
+				IP:   d.IP,
+				Text: d.Text,
 			}
+		default:
+			return nil
 		}
 	})
 }

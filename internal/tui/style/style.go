@@ -3,8 +3,10 @@ package style
 import "github.com/charmbracelet/lipgloss"
 
 type Styles struct {
-	ActiveBorderColor   lipgloss.Color
-	InactiveBorderColor lipgloss.Color
+	ActiveBorderColor          lipgloss.Color
+	InactiveBorderColor        lipgloss.Color
+	ActiveServiceStatusColor   lipgloss.Color
+	InactiveServiceStatusColor lipgloss.Color
 
 	App    lipgloss.Style
 	Header lipgloss.Style
@@ -15,6 +17,16 @@ type Styles struct {
 	MenuItem         lipgloss.Style
 	MenuCursor       lipgloss.Style
 	SelectedMenuItem lipgloss.Style
+
+	Home             lipgloss.Style
+	HomeItem         lipgloss.Style
+	HomeCursor       lipgloss.Style
+	SelectedHomeItem lipgloss.Style
+
+	HelpKey   lipgloss.Style
+	HelpValue lipgloss.Style
+
+	ServiceStatus lipgloss.Style
 
 	TeamBodyBorder lipgloss.Border
 
@@ -27,6 +39,8 @@ func DefaultStyles() *Styles {
 
 	s.ActiveBorderColor = lipgloss.Color("#F98C17")
 	s.InactiveBorderColor = lipgloss.Color("#FBB162")
+	s.ActiveServiceStatusColor = lipgloss.Color("#EF1010")
+	s.InactiveServiceStatusColor = lipgloss.Color("#3d1")
 
 	s.App = lipgloss.NewStyle().
 		Margin(1, 2)
@@ -41,8 +55,7 @@ func DefaultStyles() *Styles {
 
 	s.Branch = lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#3d1")).
-		Background(lipgloss.Color("#14222b")).
-		Padding(0, 1)
+		Background(lipgloss.Color("#14222b"))
 
 	s.Menu = lipgloss.NewStyle().
 		BorderStyle(lipgloss.RoundedBorder()).
@@ -61,6 +74,32 @@ func DefaultStyles() *Styles {
 	s.SelectedMenuItem = lipgloss.NewStyle().
 		Foreground(lipgloss.Color("#FBB162")).
 		PaddingLeft(2)
+
+	s.Home = lipgloss.NewStyle().
+		BorderStyle(lipgloss.RoundedBorder()).
+		BorderForeground(s.ActiveBorderColor).
+		Padding(1, 3)
+
+	s.HomeCursor = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("#F98C17")).
+		SetString(">")
+
+	s.HomeItem = lipgloss.NewStyle().
+		BorderStyle(lipgloss.ThickBorder()).
+		BorderForeground(s.InactiveBorderColor)
+
+	s.SelectedHomeItem = lipgloss.NewStyle().
+		BorderStyle(lipgloss.ThickBorder()).
+		BorderForeground(s.InactiveBorderColor)
+
+	s.HelpKey = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("241"))
+
+	s.HelpValue = lipgloss.NewStyle().
+		Foreground(lipgloss.Color("239"))
+
+	s.ServiceStatus = lipgloss.NewStyle().
+		Foreground(s.InactiveServiceStatusColor)
 
 	s.TeamBodyBorder = lipgloss.Border{
 		Top:         "━",
