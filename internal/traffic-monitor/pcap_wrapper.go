@@ -66,13 +66,11 @@ func (p *PcapWrapper) StartListeners(ctx context.Context) error {
 	}
 	p.wg.Wait()
 
-	for {
-		select {
-		case err := <-p.ErrorCh:
-			return err
-		default:
-			return nil
-		}
+	select {
+	case err := <-p.ErrorCh:
+		return err
+	default:
+		return nil
 	}
 }
 
@@ -99,6 +97,8 @@ func (p *PcapWrapper) statistic(ctx context.Context) {
 			// log.Println(sender)
 		}
 	}
+
+	
 }
 
 func (p *PcapWrapper) capturePackets(ctx context.Context, service config.Service) {

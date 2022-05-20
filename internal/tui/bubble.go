@@ -99,7 +99,7 @@ func (b *Bubble) Init() tea.Cmd {
 
 	b.boxes[1] = b.teamEntry[0].bubble
 
-	home := home.NewBubble(b.config.Teams, b.width, 0, b.height, heightMargin, b.style)
+	home := home.NewBubble(b.config.Services, b.config.Teams, b.width, 0, b.height, heightMargin, b.style)
 	b.boxes[2] = home
 
 	b.state = loadState

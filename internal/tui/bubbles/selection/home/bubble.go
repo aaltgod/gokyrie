@@ -1,6 +1,8 @@
 package home
 
 import (
+	"strings"
+
 	"github.com/aaltgod/gokyrie/internal/config"
 	"github.com/aaltgod/gokyrie/internal/tui/style"
 	"github.com/charmbracelet/bubbles/viewport"
@@ -9,9 +11,17 @@ import (
 	"github.com/muesli/reflow/truncate"
 )
 
+var symbols = []string{
+	"①", "②", "③",
+	"④", "⑤", "⑥",
+	"⑦", "⑧", "⑨",
+	"⑩",
+}
+
 type Bubble struct {
-	Items        []config.Team
-	SelectedItem int
+	Services     []config.Service
+	Teams        []config.Team
+	SelectedTeam int
 	width        int
 	widthMargin  int
 	height       int
@@ -20,9 +30,10 @@ type Bubble struct {
 	viewport     *viewport.Model
 }
 
-func NewBubble(items []config.Team, width, widthMargin, height, heightMargin int, styles *style.Styles) *Bubble {
+func NewBubble(services []config.Service, teams []config.Team, width, widthMargin, height, heightMargin int, styles *style.Styles) *Bubble {
 	b := &Bubble{
-		Items:        items,
+		Services:     services,
+		Teams:        teams,
 		styles:       styles,
 		widthMargin:  widthMargin,
 		heightMargin: heightMargin,
@@ -42,28 +53,24 @@ func (b *Bubble) Init() tea.Cmd {
 func (b Bubble) View() string {
 	var (
 		homeMaxItemWidth = 15
-		items            = make([]string, len(b.Items))
+		items            = make([]string, len(b.Teams))
 	)
 
-	for i, item := range b.Items {
+	for i, item := range b.Teams {
 		teamName := truncate.StringWithTail(item.Name, uint(homeMaxItemWidth), "…")
 		teamAddress := truncate.StringWithTail(item.IP, uint(homeMaxItemWidth), "…")
-		if i == b.SelectedItem {
+		if i == b.SelectedTeam {
 			items[i] = b.styles.SelectedHomeItem.Render(
-				teamName + "\n" + teamAddress +
-					b.styles.ServiceStatus.Copy().
-						Foreground(b.styles.ActiveServiceStatusColor).Render("●"))
+				teamName + "\n" + teamAddress + "\n" + b.serviceStatuses())
 		} else {
 			items[i] = b.styles.HomeItem.Render(
-				teamName + "\n" + teamAddress +
-					b.styles.ServiceStatus.Copy().
-						Foreground(b.styles.InactiveServiceStatusColor).Render("●"))
+				teamName + "\n" + teamAddress + "\n" + b.serviceStatuses())
 		}
 	}
 
 	homeWitdh := b.width - b.widthMargin - 10
 	columnAmount := homeWitdh / homeMaxItemWidth
-	remainigItems := len(b.Items) - columnAmount
+	remainigItems := len(b.Teams) - columnAmount
 	lineAmount := 1
 
 	for {
@@ -116,4 +123,16 @@ func (b *Bubble) setSize(w, h int) {
 
 func (b Bubble) headerView() string {
 	return ""
+}
+
+func (b Bubble) serviceStatuses() string {
+	s := strings.Builder{}
+	for i := range b.Services {
+		s.WriteString(
+			b.styles.ServiceStatus.Copy().
+				Foreground(b.styles.ActiveServiceStatusColor).Render(symbols[i]),
+		)
+		s.WriteString(" ")
+	}
+	return s.String()
 }
